@@ -11,14 +11,13 @@ struct ContentView: View {
     let predators = Predators()
     
     @State var searchText = ""
+    @State var currentSelection = APType.all
+    
+    @State var isAlphabetical: Bool = false
     var filteredDino:[ApexPredator] {
-        if searchText.isEmpty {
-            return predators.apexPredators
-        }else{
-            return predators.apexPredators.filter{ predator in
-                predator.name.localizedCaseInsensitiveContains(searchText)
-            }
-        }
+        predators.filter(by: currentSelection)
+        predators.sort(by: isAlphabetical)
+        return predators.searchDino(for: searchText)
     }
     
     var body: some View {
@@ -61,6 +60,33 @@ struct ContentView: View {
             .searchable(text: $searchText)
             .autocorrectionDisabled()
             .animation(.default, value: searchText)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button{
+                        withAnimation {
+                            isAlphabetical.toggle()
+                        }
+                    }label: {
+                        if isAlphabetical {
+                            Image(systemName: "textformat.alt")
+                        }else{
+                            Image(systemName: "film")
+                        }
+                    }
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu{
+                        Picker("Picker", selection: $currentSelection.animation()) {
+                            ForEach(APType.allCases){ type in
+                                Label(type.rawValue.capitalized, systemImage: type.icon)
+                            }
+                        }
+                    }label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+                }
+            }
             
         }.preferredColorScheme(.dark)
     }
