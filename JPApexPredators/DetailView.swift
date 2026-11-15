@@ -6,14 +6,20 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct DetailView: View {
     var predator:ApexPredator
+    @State var position:MapCameraPosition
+    @Namespace var namespace
+
     var body: some View {
         GeometryReader{ geo in
             ScrollView{
                 ZStack(alignment:.bottomTrailing){
+                    
                     //cover bg of PredatorType
+                    
                     Image(predator.type.rawValue)
                         .resizable()
                         .scaledToFit()
@@ -50,8 +56,45 @@ struct DetailView: View {
                     
                     Text(predator.name)
                         .font(.largeTitle)
+                    // current location
+                    NavigationLink{
+                        PredatorMap(postition: .camera(MapCamera(centerCoordinate: predator.location,
+                                                                 distance: 1000,
+                                                                 heading: 250,
+                                                                 pitch: 80))).preferredColorScheme(.dark)
+                            .navigationTransition(.zoom(sourceID: 1, in: namespace))
+                    }label: {
+                        Map(position: $position){
+                            Annotation(predator.name, coordinate: predator.location) {
+                                Image(systemName: "mappin.and.ellipse")
+                                    .font(.largeTitle)
+                                    .imageScale(.large)
+                            }
+                        }
+                        .frame(height: geo.size.height/5)
+                        .overlay(alignment: .trailing) {
+                            Image(systemName: "greaterthan")
+                                .imageScale(.large)
+                                .font(.title3)
+                                .padding(.trailing , 5)
+                            
+                        }
+                        .overlay(alignment: .topLeading) {
+                            Text("Current Location")
+                                .padding([.leading,.bottom], 5)
+                                .padding(.trailing, 8)
+                                .background(.black.opacity(0.33))
+                                .clipShape(.rect(topLeadingRadius: 15, bottomTrailingRadius: 15))
+                        }
+                        .clipShape(.rect(cornerRadius: 15))
+                    }
+                    .matchedTransitionSource(id: 1, in: namespace)
+                    
+                    
+                    
                     Text("Appears in :")
                         .font(.title3)
+                        .padding(.top)
                     ForEach(predator.movies, id: \.self){ movie in
                         Text("•"+movie)
                             .font(.subheadline)
@@ -88,5 +131,12 @@ struct DetailView: View {
 }
 
 #Preview {
-    DetailView(predator: Predators().apexPredators[10])
+    let predator = Predators().apexPredators[2]
+    NavigationStack{
+        DetailView(predator: predator,
+                   position: .camera(
+                    MapCamera(centerCoordinate:predator.location,
+                              distance: 30000))
+        )
+    }
 }
